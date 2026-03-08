@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BestPort</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
-        body { background-color: #0f0f0f; color: white; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0f0f0f; color: white; overflow-x: hidden; }
 
         /* Header */
         header {
             height: 56px;
-            padding: 0 16px;
+            padding: 0 24px;
             display: flex;
             align-items: center;
             position: sticky;
@@ -19,44 +19,62 @@
             background: #0f0f0f;
             z-index: 100;
         }
-        .logo { font-size: 20px; font-weight: bold; cursor: pointer; }
+        .logo { 
+            font-size: 22px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            letter-spacing: -1px;
+        }
 
         /* Home Grid */
-        .container { padding: 20px; }
+        .container { padding: 24px; max-width: 2200px; margin: 0 auto; }
         .video-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
         }
-        .video-card { cursor: pointer; transition: transform 0.2s; }
-        .video-card:hover { transform: scale(1.02); }
+
+        /* Video Card Styling */
+        .video-card { cursor: pointer; border-radius: 12px; overflow: hidden; }
         .thumbnail {
             width: 100%;
             aspect-ratio: 16/9;
-            background: #222;
+            background: #272727;
             border-radius: 12px;
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: border-radius 0.2s;
         }
-        .thumbnail video { width: 100%; height: 100%; object-fit: cover; }
-        .video-info { margin-top: 12px; }
-        .video-title { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+        .video-card:hover .thumbnail { border-radius: 0; }
+        .thumbnail video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        
+        .video-info { padding: 12px 4px; }
+        .video-title { font-weight: 600; font-size: 16px; line-height: 1.4; margin-bottom: 4px; }
         .video-meta { color: #aaa; font-size: 14px; }
 
-        /* Player Page (Hidden by default) */
+        /* Video Player Page */
         #player-page { display: none; max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .main-video { width: 100%; border-radius: 12px; background: black; }
-        .controls { margin-top: 15px; display: flex; gap: 10px; align-items: center; }
+        .video-wrapper { position: relative; width: 100%; background: #000; border-radius: 12px; overflow: hidden; }
+        .main-video { width: 100%; display: block; aspect-ratio: 16/9; }
+        
+        .player-details { margin-top: 20px; border-bottom: 1px solid #333; padding-bottom: 20px; }
+        .controls { margin-top: 15px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        
         button {
             background: #272727; border: none; color: white;
-            padding: 8px 16px; border-radius: 20px; cursor: pointer;
+            padding: 10px 18px; border-radius: 20px; cursor: pointer;
+            font-size: 14px; font-weight: 500; transition: background 0.2s;
         }
         button:hover { background: #3f3f3f; }
-        .speed-label { font-size: 14px; color: #aaa; }
+        .speed-label { font-size: 14px; color: #aaa; margin-left: 10px; font-weight: bold; }
+        
+        .back-btn { background: #cc0000; margin-left: auto; }
+        .back-btn:hover { background: #ff0000; }
 
         .hidden { display: none !important; }
+        #loading-msg { text-align: center; color: #aaa; padding: 50px; }
     </style>
 </head>
 <body>
@@ -66,41 +84,84 @@
     </header>
 
     <div id="home-page" class="container">
-        <div class="video-grid">
-            <div class="video-card" onclick="openVideo('https://files.catbox.moe/2zz5q0.mp4', 'Featured Video')">
-                <div class="thumbnail">
-                    <video src="https://files.catbox.moe/2zz5q0.mp4#t=0.1" muted></video>
-                </div>
-                <div class="video-info">
-                    <div class="video-title">Featured Video</div>
-                    <div class="video-meta">BestPort Original • 1.2M views</div>
-                </div>
-            </div>
-            
-            <div class="video-card"><div class="thumbnail"></div><div class="video-info"><div class="video-title">Coming Soon</div></div></div>
-            <div class="video-card"><div class="thumbnail"></div><div class="video-info"><div class="video-title">Coming Soon</div></div></div>
-        </div>
+        <div id="loading-msg">Scanning for videos...</div>
+        <div class="video-grid" id="main-grid"></div>
     </div>
 
     <div id="player-page">
-        <video id="video-element" class="main-video" controls autoplay></video>
-        <h2 id="video-display-title" style="margin-top:15px;"></h2>
-        <div class="controls">
-            <button onclick="changeSpeed(0.5)">0.5x</button>
-            <button onclick="changeSpeed(1)">Normal</button>
-            <button onclick="changeSpeed(1.5)">1.5x</button>
-            <button onclick="changeSpeed(2)">2x</button>
-            <span class="speed-label" id="current-speed">Speed: 1x</span>
-            <button onclick="goHome()" style="margin-left: auto; background: #cc0000;">Back to Home</button>
+        <div class="video-wrapper">
+            <video id="video-element" class="main-video" controls autoplay></video>
+        </div>
+        <div class="player-details">
+            <h1 id="video-display-title"></h1>
+            <div class="controls">
+                <button onclick="changeSpeed(0.5)">0.5x</button>
+                <button onclick="changeSpeed(1)">Normal</button>
+                <button onclick="changeSpeed(1.5)">1.5x</button>
+                <button onclick="changeSpeed(2)">2x</button>
+                <span class="speed-label" id="current-speed">Speed: 1x</span>
+                <button class="back-btn" onclick="goHome()">Back to Home</button>
+            </div>
         </div>
     </div>
 
     <script>
+        // --- YOUR GITHUB CONFIG ---
+        const USER = 'YourGitHubUsername'; // Update this!
+        const REPO = 'YourRepoName';       // Update this!
+        const BRANCH = 'main';             // Usually 'main' or 'master'
+        
         const homePage = document.getElementById('home-page');
+        const videoGrid = document.getElementById('main-grid');
+        const loadingMsg = document.getElementById('loading-msg');
         const playerPage = document.getElementById('player-page');
         const videoElement = document.getElementById('video-element');
         const videoTitle = document.getElementById('video-display-title');
         const speedText = document.getElementById('current-speed');
+
+        // Fetch videos from GitHub API
+        async function loadVideos() {
+            const apiUrl = `https://api.github.com/repos/${USER}/${REPO}/contents/`;
+            
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error('Repo not found');
+                
+                const files = await response.json();
+                const videoFiles = files.filter(file => file.name.toLowerCase().endsWith('.mp4'));
+
+                if (videoFiles.length === 0) {
+                    loadingMsg.innerText = "No .mp4 files found in the root directory.";
+                    return;
+                }
+
+                loadingMsg.classList.add('hidden');
+                videoGrid.innerHTML = ''; // Clear previous
+
+                videoFiles.forEach(file => {
+                    const rawUrl = `https://raw.githubusercontent.com/${USER}/${REPO}/${BRANCH}/${file.name}`;
+                    const displayName = file.name.replace('.mp4', '').replace(/_/g, ' ').replace(/-/g, ' ');
+
+                    const card = document.createElement('div');
+                    card.className = 'video-card';
+                    card.onclick = () => openVideo(rawUrl, displayName);
+                    
+                    card.innerHTML = `
+                        <div class="thumbnail">
+                            <video src="${rawUrl}#t=1.0" preload="metadata" muted></video>
+                        </div>
+                        <div class="video-info">
+                            <div class="video-title">${displayName}</div>
+                            <div class="video-meta">Uploaded File</div>
+                        </div>
+                    `;
+                    videoGrid.appendChild(card);
+                });
+            } catch (err) {
+                loadingMsg.innerText = "Error loading videos. Check USER and REPO names in code.";
+                console.error(err);
+            }
+        }
 
         function openVideo(url, title) {
             homePage.classList.add('hidden');
@@ -109,10 +170,12 @@
             videoTitle.innerText = title;
             videoElement.playbackRate = 1;
             speedText.innerText = "Speed: 1x";
+            window.scrollTo(0, 0);
         }
 
         function goHome() {
             videoElement.pause();
+            videoElement.src = "";
             playerPage.style.display = 'none';
             homePage.classList.remove('hidden');
         }
@@ -121,6 +184,9 @@
             videoElement.playbackRate = rate;
             speedText.innerText = `Speed: ${rate}x`;
         }
+
+        // Initialize
+        loadVideos();
     </script>
 </body>
 </html>
