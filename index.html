@@ -5,62 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BestPorn</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Roboto", sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
         body { background-color: #0f0f0f; color: white; }
 
+        /* Header */
         header {
             height: 56px;
-            padding: 0 20px;
+            padding: 0 16px;
             display: flex;
             align-items: center;
-            background: #0f0f0f;
             position: sticky;
             top: 0;
+            background: #0f0f0f;
             z-index: 100;
         }
-        .logo { font-size: 20px; font-weight: bold; cursor: pointer; color: #fff; text-decoration: none; }
+        .logo { font-size: 20px; font-weight: bold; cursor: pointer; }
 
+        /* Home Grid */
         .container { padding: 20px; }
         .video-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
         }
-
-        /* The Card */
-        .video-card { cursor: pointer; width: 100%; }
-        .thumbnail-box {
+        .video-card { cursor: pointer; transition: transform 0.2s; }
+        .video-card:hover { transform: scale(1.02); }
+        .thumbnail {
             width: 100%;
             aspect-ratio: 16/9;
-            background: #272727;
+            background: #222;
             border-radius: 12px;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
-            border: 1px solid #333;
         }
-        .thumbnail-box video { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-        
+        .thumbnail video { width: 100%; height: 100%; object-fit: cover; }
         .video-info { margin-top: 12px; }
-        .video-title { font-weight: bold; font-size: 16px; margin-bottom: 4px; display: block; }
+        .video-title { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
         .video-meta { color: #aaa; font-size: 14px; }
 
-        /* Player View */
-        #player-view { display: none; max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .video-container { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; }
-        video#main-player { width: 100%; height: 100%; }
-
-        .player-controls { margin-top: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        h1#display-title { margin-bottom: 10px; font-size: 24px; }
-
+        /* Player Page (Hidden by default) */
+        #player-page { display: none; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .main-video { width: 100%; border-radius: 12px; background: black; }
+        .controls { margin-top: 15px; display: flex; gap: 10px; align-items: center; }
         button {
-            background: #272727; border: none; color: white; padding: 10px 20px;
-            border-radius: 20px; cursor: pointer; font-size: 14px;
+            background: #272727; border: none; color: white;
+            padding: 8px 16px; border-radius: 20px; cursor: pointer;
         }
         button:hover { background: #3f3f3f; }
-        .back-btn { background: #cc0000; margin-left: auto; }
-        .back-btn:hover { background: #ff0000; }
+        .speed-label { font-size: 14px; color: #aaa; }
 
         .hidden { display: none !important; }
     </style>
@@ -68,92 +62,65 @@
 <body>
 
     <header>
-        <div class="logo" onclick="showHome()">BestPorn</div>
+        <div class="logo" onclick="goHome()">BestPorn</div>
     </header>
 
-    <div id="home-view" class="container">
-        <div class="video-grid" id="grid">
+    <div id="home-page" class="container">
+        <div class="video-grid">
+            <div class="video-card" onclick="openVideo('https://files.catbox.moe/2zz5q0.mp4', 'Featured Video')">
+                <div class="thumbnail">
+                    <video src="https://files.catbox.moe/2zz5q0.mp4#t=0.1" muted></video>
+                </div>
+                <div class="video-info">
+                    <div class="video-title">Featured Video</div>
+                    <div class="video-meta">BestPorn Original • 1.2M views</div>
+                </div>
             </div>
+            
+            <div class="video-card"><div class="thumbnail"></div><div class="video-info"><div class="video-title">Coming Soon</div></div></div>
+            <div class="video-card"><div class="thumbnail"></div><div class="video-info"><div class="video-title">Coming Soon</div></div></div>
+        </div>
     </div>
 
-    <div id="player-view">
-        <div class="video-container">
-            <video id="main-player" controls autoplay src=""></video>
-        </div>
-        <div class="player-info">
-            <h1 id="display-title">Loading...</h1>
-            <div class="player-controls">
-                <button onclick="setSpeed(0.5)">0.5x</button>
-                <button onclick="setSpeed(1)">1x (Normal)</button>
-                <button onclick="setSpeed(1.5)">1.5x</button>
-                <button onclick="setSpeed(2)">2x</button>
-                <span id="speed-label" style="color:#aaa; font-size:14px; margin-left:10px;">Speed: 1x</span>
-                <button class="back-btn" onclick="showHome()">Back to Home</button>
-            </div>
+    <div id="player-page">
+        <video id="video-element" class="main-video" controls autoplay></video>
+        <h2 id="video-display-title" style="margin-top:15px;"></h2>
+        <div class="controls">
+            <button onclick="changeSpeed(0.5)">0.5x</button>
+            <button onclick="changeSpeed(1)">Normal</button>
+            <button onclick="changeSpeed(1.5)">1.5x</button>
+            <button onclick="changeSpeed(2)">2x</button>
+            <span class="speed-label" id="current-speed">Speed: 1x</span>
+            <button onclick="goHome()" style="margin-left: auto; background: #cc0000;">Back to Home</button>
         </div>
     </div>
 
     <script>
-        const videoUrl = "https://files.catbox.moe/2zz5q0.mp4";
-        const nameFileUrl = "https://raw.githubusercontent.com/JayLayDayFae/BestPorn/refs/heads/main/NameCard1";
+        const homePage = document.getElementById('home-page');
+        const playerPage = document.getElementById('player-page');
+        const videoElement = document.getElementById('video-element');
+        const videoTitle = document.getElementById('video-display-title');
+        const speedText = document.getElementById('current-speed');
 
-        const homeView = document.getElementById('home-view');
-        const playerView = document.getElementById('player-view');
-        const mainPlayer = document.getElementById('main-player');
-        const displayTitle = document.getElementById('display-title');
-        const speedLabel = document.getElementById('speed-label');
-        const grid = document.getElementById('grid');
-
-        async function init() {
-            let fetchedName = "BestPorn Video";
-
-            try {
-                // Fetch name from GitHub (busting cache with timestamp)
-                const resp = await fetch(`${nameFileUrl}?t=${Date.now()}`);
-                if (resp.ok) {
-                    const text = await resp.text();
-                    if (text.trim()) fetchedName = text.trim();
-                }
-            } catch (e) {
-                console.log("Could not load name from GitHub, using default.");
-            }
-
-            // Create the card
-            grid.innerHTML = `
-                <div class="video-card" onclick="watchVideo('${fetchedName}')">
-                    <div class="thumbnail-box">
-                        <video src="${videoUrl}#t=0.1" muted></video>
-                    </div>
-                    <div class="video-info">
-                        <span class="video-title">${fetchedName}</span>
-                        <span class="video-meta">BestPorn • 2026</span>
-                    </div>
-                </div>
-            `;
+        function openVideo(url, title) {
+            homePage.classList.add('hidden');
+            playerPage.style.display = 'block';
+            videoElement.src = url;
+            videoTitle.innerText = title;
+            videoElement.playbackRate = 1;
+            speedText.innerText = "Speed: 1x";
         }
 
-        function watchVideo(title) {
-            homeView.classList.add('hidden');
-            playerView.style.display = 'block';
-            mainPlayer.src = videoUrl;
-            displayTitle.innerText = title;
-            mainPlayer.playbackRate = 1;
-            speedLabel.innerText = "Speed: 1x";
+        function goHome() {
+            videoElement.pause();
+            playerPage.style.display = 'none';
+            homePage.classList.remove('hidden');
         }
 
-        function showHome() {
-            mainPlayer.pause();
-            mainPlayer.src = "";
-            playerView.style.display = 'none';
-            homeView.classList.remove('hidden');
+        function changeSpeed(rate) {
+            videoElement.playbackRate = rate;
+            speedText.innerText = `Speed: ${rate}x`;
         }
-
-        function setSpeed(s) {
-            mainPlayer.playbackRate = s;
-            speedLabel.innerText = "Speed: " + s + "x";
-        }
-
-        init();
     </script>
 </body>
 </html>
